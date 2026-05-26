@@ -120,7 +120,7 @@ The `prisma/seed.ts` script creates sample colleges and bulk-inserts course temp
 
 ## Database Schema
 
-Schema file: `/backend/prisma/schema.prisma`
+Schema file: `backend/prisma/schema.prisma`
 
 ### Entity relationship summary
 
@@ -373,7 +373,7 @@ college_discovery/
 
 ## Local Setup
 
-From `/tmp/workspace/Tanush008/college_discovery/backend`:
+From the `backend/` directory:
 
 ```bash
 npm install
