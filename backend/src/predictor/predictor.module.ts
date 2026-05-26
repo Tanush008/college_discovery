@@ -5,8 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
   controllers: [PredictorController],
-  providers: [PredictorService,
-    PrismaService
-  ]
+  providers: [PredictorService, PrismaService],
 })
 export class PredictorModule {}

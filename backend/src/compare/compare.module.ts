@@ -5,8 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
   controllers: [CompareController],
-  providers: [CompareService,
-    PrismaService
-  ]
+  providers: [CompareService, PrismaService],
 })
-export class CompareModule { }
+export class CompareModule {}

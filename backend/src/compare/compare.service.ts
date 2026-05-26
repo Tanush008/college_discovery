@@ -1,45 +1,35 @@
-import {
-  Injectable,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class CompareService {
-  constructor(
-    private prisma: PrismaService,
-  ) { }
+  constructor(private prisma: PrismaService) {}
 
   async compare(ids: string[]) {
     if (ids.length < 2) {
-      throw new BadRequestException(
-        'At least 2 colleges are required',
-      );
+      throw new BadRequestException('At least 2 colleges are required');
     }
 
     if (ids.length > 3) {
-      throw new BadRequestException(
-        'Maximum 3 colleges can be compared',
-      );
+      throw new BadRequestException('Maximum 3 colleges can be compared');
     }
 
-    const colleges =
-      await this.prisma.college.findMany({
-        where: {
-          id: {
-            in: ids,
-          },
+    const colleges = await this.prisma.college.findMany({
+      where: {
+        id: {
+          in: ids,
         },
+      },
 
-        include: {
-          courses: true,
+      include: {
+        courses: true,
 
-          reviews: true,
+        reviews: true,
 
-          cutoffs: true,
-        },
-      });
+        cutoffs: true,
+      },
+    });
 
     return colleges.map((college) => ({
       id: college.id,
@@ -52,31 +42,20 @@ export class CompareService {
 
       rating: college.rating,
 
-      averagePackage:
-        college.avgPackage,
+      averagePackage: college.avgPackage,
 
-      highestPackage:
-        college.highestPackage,
+      highestPackage: college.highestPackage,
 
-      totalCourses:
-        college.courses.length,
+      totalCourses: college.courses.length,
 
-      totalReviews:
-        college.reviews.length,
+      totalReviews: college.reviews.length,
 
-      topCourses:
-        college.courses
-          .slice(0, 5)
-          .map((course) => course.name),
+      topCourses: college.courses.slice(0, 5).map((course) => course.name),
 
-      popularCutoffs:
-        college.cutoffs
-          .slice(0, 3)
-          .map((cutoff) => ({
-            course: cutoff.course,
-            closingRank:
-              cutoff.closingRank,
-          })),
+      popularCutoffs: college.cutoffs.slice(0, 3).map((cutoff) => ({
+        course: cutoff.course,
+        closingRank: cutoff.closingRank,
+      })),
     }));
   }
 }

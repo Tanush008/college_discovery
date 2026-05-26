@@ -6,12 +6,7 @@ import { ReviewsService } from './reviews.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
-  controllers: [
-    ReviewsController,
-  ],
-  providers: [
-    ReviewsService,
-    PrismaService
-  ],
+  controllers: [ReviewsController],
+  providers: [ReviewsService, PrismaService],
 })
-export class ReviewsModule { }
+export class ReviewsModule {}
