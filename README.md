@@ -45,24 +45,27 @@ Request Flow Tree
 Client / API Consumer
 └── HTTP Request
     └── NestJS Application
-        ├── AuthController
-        │   └── AuthService
-        ├── CollegesController
-        │   └── CollegesService
-        ├── CoursesController
-        │   └── CoursesService
-        ├── ReviewsController
-        │   └── ReviewsService
-        ├── CutOffController
-        │   └── CutOffService
-        ├── PredictorController
-        │   └── PredictorService
-        ├── CompareController
-        │   └── CompareService
-        └── SavedController
-            └── SavedService
-                └── PrismaService
-                    └── PostgreSQL
+        ├── Controller Layer
+        │   ├── AuthController
+        │   ├── CollegesController
+        │   ├── CoursesController
+        │   ├── ReviewsController
+        │   ├── CutOffController
+        │   ├── PredictorController
+        │   ├── CompareController
+        │   └── SavedController
+        ├── Service Layer
+        │   ├── AuthService
+        │   ├── CollegesService
+        │   ├── CoursesService
+        │   ├── ReviewsService
+        │   ├── CutOffService
+        │   ├── PredictorService
+        │   ├── CompareService
+        │   └── SavedService
+        └── Data Layer
+            └── PrismaService
+                └── PostgreSQL
 ```
 
 Module Tree
