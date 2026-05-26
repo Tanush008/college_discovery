@@ -12,21 +12,18 @@ type PredictionResult = {
 
 @Injectable()
 export class PredictorService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async predict(dto: PredictorDto) {
-    const cutoffs =
-      await this.prisma.cutoff.findMany({
-        where: {
-          exam: dto.exam,
-          category: dto.category,
-        },
-        include: {
-          college: true,
-        },
-      });
+    const cutoffs = await this.prisma.cutoff.findMany({
+      where: {
+        exam: dto.exam,
+        category: dto.category,
+      },
+      include: {
+        college: true,
+      },
+    });
 
     const safe: PredictionResult[] = [];
     const moderate: PredictionResult[] = [];

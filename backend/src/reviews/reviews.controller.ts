@@ -18,11 +18,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('reviews')
 export class ReviewsController {
-
-  constructor(
-    private readonly reviewsService:
-      ReviewsService,
-  ) {}
+  constructor(private readonly reviewsService: ReviewsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -34,11 +30,7 @@ export class ReviewsController {
       user: any;
     },
   ) {
-
-    return this.reviewsService.create(
-      dto,
-      req.user.userId,
-    );
+    return this.reviewsService.create(dto, req.user.userId);
   }
 
   @Get()
@@ -51,15 +43,11 @@ export class ReviewsController {
     @Param('collegeId')
     collegeId: string,
   ) {
-    return this.reviewsService.findByCollege(
-      collegeId,
-    );
+    return this.reviewsService.findByCollege(collegeId);
   }
 
   @Delete(':id')
-  delete(
-    @Param('id') id: string,
-  ) {
+  delete(@Param('id') id: string) {
     return this.reviewsService.delete(id);
   }
 }

@@ -1,31 +1,18 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 
 import { CutoffService } from './cut-off.service';
 import { CreateCutoffDto } from './dto/create-cutoff.dto';
 
 @Controller('cutoffs')
 export class CutoffController {
-
-  constructor(
-    private readonly CutoffService:
-      CutoffService,
-  ) {}
+  constructor(private readonly CutoffService: CutoffService) {}
 
   @Post()
   create(
     @Body()
     dto: CreateCutoffDto,
   ) {
-    return this.CutoffService.create(
-      dto,
-    );
+    return this.CutoffService.create(dto);
   }
 
   @Get()
@@ -46,9 +33,7 @@ export class CutoffController {
     @Param('collegeId')
     collegeId: string,
   ) {
-    return this.CutoffService.findByCollege(
-      collegeId,
-    );
+    return this.CutoffService.findByCollege(collegeId);
   }
 
   @Delete(':id')

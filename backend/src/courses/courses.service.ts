@@ -1,31 +1,21 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 
 @Injectable()
 export class CoursesService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(
-    dto: CreateCourseDto,
-  ) {
-    const college =
-      await this.prisma.college.findUnique({
-        where: {
-          id: dto.collegeId,
-        },
-      });
+  async create(dto: CreateCourseDto) {
+    const college = await this.prisma.college.findUnique({
+      where: {
+        id: dto.collegeId,
+      },
+    });
 
     if (!college) {
-      throw new NotFoundException(
-        'College not found',
-      );
+      throw new NotFoundException('College not found');
     }
 
     return this.prisma.course.create({
@@ -52,9 +42,7 @@ export class CoursesService {
     });
   }
 
-  async getCollegeCourses(
-    collegeId: string,
-  ) {
+  async getCollegeCourses(collegeId: string) {
     return this.prisma.course.findMany({
       where: {
         collegeId,
