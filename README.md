@@ -315,7 +315,7 @@ Supported college listing query params:
 
 - `POST /saved` *(JWT required)*
 
-> `SavedService` also contains a `getSaved(userId)` method, but there is currently no controller route exposing it.
+> The saved-college module currently exposes `POST /saved` at the controller level; the service layer also includes `getSaved(userId)` for future or internal use.
 
 ## Folder Structure
 
