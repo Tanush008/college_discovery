@@ -1,611 +1,410 @@
-College Discovery & Decision-Making Platform - Backend
-Overview
+# College Discovery Backend
 
-This project is a production-ready backend for a College Discovery and Decision-Making Platform inspired by platforms like Careers360 and Collegedunia.
+Backend service for a college discovery platform that helps students browse colleges, inspect courses and cutoffs, compare institutes, predict likely options from exam rank, and manage authenticated actions such as reviews and saved colleges.
 
-The platform helps students:
+## Tech Stack
 
-Search and discover colleges
-View detailed college information
-Explore courses offered by colleges
-Read student reviews
-Check admission cutoffs
-Compare multiple colleges
-Predict eligible colleges based on exam rank
-Save colleges for future reference
-Manage user authentication securely
+- **Framework:** NestJS
+- **Language:** TypeScript
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Authentication:** JWT + Passport
+- **Validation:** class-validator + class-transformer
+- **Testing:** Jest
 
-The backend is built using NestJS, TypeScript, PostgreSQL, and Prisma ORM following scalable backend architecture and REST API best practices.
+## What the Backend Does
 
-Tech Stack
-Backend Framework
-NestJS
-TypeScript
-Database
-PostgreSQL
-ORM
-Prisma ORM
-Authentication
-JWT Authentication
-Passport.js
-Validation
-class-validator
-class-transformer
-API Testing
-Postman
-Deployment
-Render
-Architecture Overview
+The API is organized into focused NestJS modules:
 
-The application follows a modular NestJS architecture.
+- **Auth** - signup, login, and JWT-backed profile access
+- **Colleges** - list colleges, apply filters, and fetch detailed college pages
+- **Courses** - create and fetch course records linked to colleges
+- **Reviews** - create, list, and delete user reviews
+- **Cutoffs** - store and query admission cutoff data
+- **Compare** - compare up to three colleges side by side
+- **Predictor** - classify colleges into safe, moderate, and dream buckets from rank data
+- **Saved** - save colleges for authenticated users
 
-Request Flow Tree
+## Backend Architecture
+
+The application uses NestJS's modular layered architecture.
 
 ```text
-Client / API Consumer
-└── HTTP Request
-    └── NestJS Application
-        ├── Controller Layer
-        │   ├── AuthController
-        │   ├── CollegesController
-        │   ├── CoursesController
-        │   ├── ReviewsController
-        │   ├── CutOffController
-        │   ├── PredictorController
-        │   ├── CompareController
-        │   └── SavedController
-        ├── Service Layer
-        │   ├── AuthService
-        │   ├── CollegesService
-        │   ├── CoursesService
-        │   ├── ReviewsService
-        │   ├── CutOffService
-        │   ├── PredictorService
-        │   ├── CompareService
-        │   └── SavedService
-        └── Data Layer
-            └── PrismaService
-                └── PostgreSQL
+Client
+  -> Controller
+      -> DTO validation
+          -> Service
+              -> PrismaService
+                  -> PostgreSQL
 ```
 
-Module Tree
+### Layers
+
+#### 1. Controller layer
+
+Controllers define HTTP routes, collect params/body/query data, and delegate work to services.
+
+Examples:
+- `AuthController` handles `/auth/*`
+- `CollegesController` handles `/colleges`
+- `PredictorController` handles `/predictor`
+
+#### 2. DTO + validation layer
+
+Incoming payloads are validated through DTO classes and a global `ValidationPipe` configured in `src/main.ts`.
+
+Current validation behavior:
+- strips unknown properties with `whitelist: true`
+- transforms request values with `transform: true`
+- validates email, numbers, rank ranges, and required fields through DTO decorators
+
+#### 3. Service layer
+
+Services hold the business logic:
+
+- `AuthService` hashes passwords and signs JWTs
+- `CollegesService` handles search, filtering, pagination, and detail loading
+- `PredictorService` maps rank against cutoff data
+- `CompareService` enforces the 2-to-3 college comparison limit
+
+#### 4. Data access layer
+
+`PrismaService` extends `PrismaClient`, connects on module initialization, and is reused by all domain services for type-safe database access.
+
+## Request Lifecycle
+
+1. Request reaches a controller route.
+2. NestJS applies DTO validation and transformation.
+3. Guarded routes run `JwtAuthGuard` when authentication is required.
+4. Service executes business rules.
+5. Prisma performs database reads/writes.
+6. Response is returned as plain JSON.
+
+## Data Handling
+
+### Input validation
+
+The backend validates request payloads before service execution. Examples:
+
+- `SignupDto` validates email format and minimum password length
+- `GetCollegesDto` validates filter and pagination query params
+- `PredictorDto` requires a positive integer rank
+- `CreateCutoffDto`, `CreateCourseDto`, and `CreateReviewDto` validate typed request bodies
+
+### Authentication handling
+
+- Passwords are hashed with `bcrypt`
+- JWTs are signed through Nest's `JwtModule`
+- `JwtStrategy` extracts the bearer token and exposes `{ userId, email }` on `req.user`
+- Protected routes currently include review creation, saved-college creation, and profile access
+
+### Relational integrity
+
+Prisma relations and application checks are used together:
+
+- users own reviews and saved colleges
+- courses, reviews, and cutoffs belong to a college
+- services verify parent records exist before creating dependent records in several modules
+
+### Query patterns
+
+Examples used in the codebase:
+
+- college listing uses `findMany` with `where`, `skip`, and `take`
+- college details use `include` to load courses, reviews, review authors, and cutoffs in one query
+- compare and predictor features aggregate related data before shaping the final API response
+
+### Seed data
+
+The `prisma/seed.ts` script creates sample colleges and bulk-inserts course templates with fee multipliers based on institution type.
+
+## Database Schema
+
+Schema file: `/backend/prisma/schema.prisma`
+
+### Entity relationship summary
 
 ```text
-AppModule
-├── AuthModule
-├── CollegesModule
-├── CoursesModule
-├── ReviewsModule
-├── CutOffModule
-├── PredictorModule
-├── CompareModule
-├── SavedModule
-└── PrismaModule
+User 1---* Review *---1 College
+User 1---* SavedCollege *---1 College
+College 1---* Course
+College 1---* Cutoff
 ```
 
-Layer Responsibilities Tree
-
-```text
-Controller Layer
-├── Handles HTTP requests
-├── Validates request parameters
-├── Forwards requests to services
-└── Returns API responses
-
-Service Layer
-├── Contains business logic
-├── Performs database operations
-├── Processes domain data
-├── Runs the college prediction logic
-├── Handles college comparison logic
-└── Manages saved-college functionality
-
-Database Layer
-└── Prisma ORM
-    ├── Executes CRUD operations
-    ├── Manages relations
-    ├── Helps optimize queries
-    └── Provides type-safe database access to PostgreSQL
-```
-
-Project Folder Structure
-
-```text
-college_discovery/
-├── README.md
-└── backend/
-    ├── .gitignore
-    ├── .prettierrc
-    ├── README.md
-    ├── eslint.config.mjs
-    ├── nest-cli.json
-    ├── package-lock.json
-    ├── package.json
-    ├── prisma.config.ts
-    ├── tsconfig.build.json
-    ├── tsconfig.json
-    ├── prisma/
-    │   ├── schema.prisma
-    │   ├── seed.ts
-    │   ├── migrations/
-    │   │   ├── migration_lock.toml
-    │   │   ├── 20260525111536_init/
-    │   │   │   └── migration.sql
-    │   │   └── 20260525184855_update_course/
-    │   │       └── migration.sql
-    │   └── seed-data/
-    │       ├── college.ts
-    │       └── courseTemplates.ts
-    ├── src/
-    │   ├── app.controller.spec.ts
-    │   ├── app.controller.ts
-    │   ├── app.module.ts
-    │   ├── app.service.ts
-    │   ├── main.ts
-    │   ├── auth/
-    │   │   ├── auth.controller.spec.ts
-    │   │   ├── auth.controller.ts
-    │   │   ├── auth.module.ts
-    │   │   ├── auth.service.spec.ts
-    │   │   ├── auth.service.ts
-    │   │   ├── constants.ts
-    │   │   ├── jwt-auth.guard.ts
-    │   │   ├── jwt.strategy.ts
-    │   │   └── dto/
-    │   │       ├── login.dto.ts
-    │   │       └── signup.dto.ts
-    │   ├── colleges/
-    │   │   ├── colleges.controller.spec.ts
-    │   │   ├── colleges.controller.ts
-    │   │   ├── colleges.module.ts
-    │   │   ├── colleges.service.spec.ts
-    │   │   ├── colleges.service.ts
-    │   │   └── dto/
-    │   │       ├── create-college.dto.ts
-    │   │       └── get-colleges.dto.ts
-    │   ├── compare/
-    │   │   ├── compare.controller.spec.ts
-    │   │   ├── compare.controller.ts
-    │   │   ├── compare.module.ts
-    │   │   ├── compare.service.spec.ts
-    │   │   └── compare.service.ts
-    │   ├── courses/
-    │   │   ├── courses.controller.spec.ts
-    │   │   ├── courses.controller.ts
-    │   │   ├── courses.module.ts
-    │   │   ├── courses.service.spec.ts
-    │   │   ├── courses.service.ts
-    │   │   └── dto/
-    │   │       └── create-course.dto.ts
-    │   ├── cut-off/
-    │   │   ├── cut-off.controller.spec.ts
-    │   │   ├── cut-off.controller.ts
-    │   │   ├── cut-off.module.ts
-    │   │   ├── cut-off.service.spec.ts
-    │   │   ├── cut-off.service.ts
-    │   │   └── dto/
-    │   │       └── create-cutoff.dto.ts
-    │   ├── predictor/
-    │   │   ├── predictor.controller.spec.ts
-    │   │   ├── predictor.controller.ts
-    │   │   ├── predictor.module.ts
-    │   │   ├── predictor.service.spec.ts
-    │   │   ├── predictor.service.ts
-    │   │   └── dto/
-    │   │       └── predictor.dto.ts
-    │   ├── prisma/
-    │   │   ├── prisma.module.ts
-    │   │   ├── prisma.service.spec.ts
-    │   │   └── prisma.service.ts
-    │   ├── reviews/
-    │   │   ├── reviews.controller.spec.ts
-    │   │   ├── reviews.controller.ts
-    │   │   ├── reviews.module.ts
-    │   │   ├── reviews.service.spec.ts
-    │   │   ├── reviews.service.ts
-    │   │   └── dto/
-    │   │       └── create-review.dto.ts
-    │   └── saved/
-    │       ├── saved.controller.spec.ts
-    │       ├── saved.controller.ts
-    │       ├── saved.module.ts
-    │       ├── saved.service.spec.ts
-    │       ├── saved.service.ts
-    │       └── dto/
-    │           └── save-college.dto.ts
-    └── test/
-        ├── app.e2e-spec.ts
-        └── jest-e2e.json
-```
-Database Schema Design
-User Entity
-
-Stores authenticated users.
-
-model User {
-  id          String   @id @default(uuid())
-
-  name        String
-  email       String   @unique
-  password    String
-
-  reviews     Review[]
-  saved       SavedCollege[]
-
-  createdAt   DateTime @default(now())
-}
-Relationships
-User
- ├── Reviews
- └── Saved Colleges
-College Entity
-
-Stores core college information.
-
-model College {
-  id             String @id @default(uuid())
-
-  name           String
-  location       String
-
-  fees           Int
-  rating         Float
-
-  overview       String
-
-  avgPackage     Int
-  highestPackage Int
-
-  courses        Course[]
-  reviews        Review[]
-  cutoffs        Cutoff[]
-
-  savedBy        SavedCollege[]
-}
-Stored Information
-College Name
-Location
-Average Fees
-Rating
-Overview
-Average Placement Package
-Highest Placement Package
-Course Entity
-
-Stores courses offered by colleges.
-
-model Course {
-  id          String @id @default(uuid())
-
-  name        String
-  degree      String
-  duration    String
-  fees        Int
-
-  collegeId   String
-
-  college College
-  @relation(fields:[collegeId], references:[id])
-}
-Example
-IIT Delhi
- ├── Computer Science Engineering
- ├── Information Technology
- ├── Electronics Engineering
- └── Mechanical Engineering
-Review Entity
-
-Stores reviews submitted by authenticated users.
-
-model Review {
-  id          String @id @default(uuid())
-
-  rating      Float
-  comment     String
-
-  userId      String
-  collegeId   String
-
-  user        User
-  college     College
-
-  createdAt   DateTime @default(now())
-}
-Features
-User-specific reviews
-College-specific reviews
-Rating system
-Cutoff Entity
-
-Stores admission cutoff information.
-
-model Cutoff {
-  id            String @id @default(uuid())
-
-  exam          String
-  category      String
-
-  course        String
-
-  openingRank   Int
-  closingRank   Int
+### `User`
+
+Stores application users.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `String` | Primary key, UUID |
+| `name` | `String` | User display name |
+| `email` | `String` | Unique email |
+| `password` | `String` | Hashed password |
+| `createdAt` | `DateTime` | Creation timestamp |
+
+Relations:
+- one user can create many `Review` records
+- one user can create many `SavedCollege` records
+
+### `College`
+
+Stores the main college profile shown in listings and detail pages.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `String` | Primary key, UUID |
+| `name` | `String` | College name |
+| `location` | `String` | City or place |
+| `fees` | `Int` | Base fee value |
+| `rating` | `Float` | College rating |
+| `overview` | `String` | Description/summary |
+| `avgPackage` | `Int` | Average placement package |
+| `highestPackage` | `Int` | Highest package |
+| `createdAt` | `DateTime` | Creation timestamp |
+
+Relations:
+- one college has many `Course`
+- one college has many `Review`
+- one college has many `Cutoff`
+- one college can be referenced by many `SavedCollege`
+
+### `Course`
+
+Stores courses attached to a college.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `String` | Primary key, UUID |
+| `name` | `String` | Course name |
+| `degree` | `String` | Degree label |
+| `duration` | `String` | Course duration |
+| `fees` | `Int` | Course-specific fee |
+| `collegeId` | `String` | Foreign key to `College` |
+
+Meaning:
+- lets the backend show all programs offered by a college
+- is reused by compare responses for quick course counts and top-course lists
+
+### `Review`
+
+Stores college reviews submitted by authenticated users.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `String` | Primary key, UUID |
+| `rating` | `Float` | Review score |
+| `comment` | `String` | User feedback |
+| `userId` | `String` | Foreign key to `User` |
+| `collegeId` | `String` | Foreign key to `College` |
+| `createdAt` | `DateTime` | Creation timestamp |
+
+Meaning:
+- connects a user opinion to one college
+- is returned with selected user info in review and college detail queries
+
+### `Cutoff`
+
+Stores admission cutoff information for predictions and detail pages.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `String` | Primary key, UUID |
+| `exam` | `String` | Exam name |
+| `category` | `String` | Reservation/general category |
+| `course` | `String` | Course name |
+| `openingRank` | `Int` | Opening rank |
+| `closingRank` | `Int` | Closing rank |
+| `collegeId` | `String` | Foreign key to `College` |
+
+Meaning:
+- powers the rank predictor
+- supports college-specific cutoff lookups
+
+### `SavedCollege`
+
+Join table for a user's saved colleges.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `id` | `String` | Primary key, UUID |
+| `userId` | `String` | Foreign key to `User` |
+| `collegeId` | `String` | Foreign key to `College` |
+| `createdAt` | `DateTime` | Creation timestamp |
+
+Meaning:
+- models bookmarks/favorites
+- links users to colleges without duplicating college data
 
-  collegeId     String
+## Predictor Logic
 
-  college College
-  @relation(fields:[collegeId], references:[id])
+The predictor compares the submitted rank with each matching cutoff's `closingRank`.
 
-  createdAt DateTime @default(now())
-}
-Example
-Exam: JEE Main
-Category: General
-Course: Computer Science Engineering
-
-Opening Rank: 1000
-Closing Rank: 12000
-Saved College Entity
+- `rank <= 70% of closingRank` -> **safe**
+- `rank <= closingRank` -> **moderate**
+- `rank <= 115% of closingRank` -> **dream**
 
-Stores bookmarked colleges.
+The response is grouped into:
 
-model SavedCollege {
-  id          String @id @default(uuid())
-
-  userId      String
-  collegeId   String
-
-  user        User
-  college     College
-
-  createdAt   DateTime @default(now())
-}
-Relationship
-User
- └── Saved Colleges
-
-College
- └── Saved By Users
-Authentication System
-
-JWT-based authentication is implemented.
-
-Signup
-POST /auth/signup
-
-Creates a new user account.
-
-Login
-POST /auth/login
-
-Returns:
-
-{
-  "accessToken": "jwt_token"
-}
-Protected Routes
-POST /reviews
-POST /saved
-GET /saved
-GET /auth/profile
-
-Authorization header:
-
-Bearer <JWT_TOKEN>
-College Search & Discovery
-
-Endpoint:
-
-GET /colleges
-
-Supports:
-
-Pagination
-Search
-Filters
-Sorting
-
-Example:
-
-GET /colleges?page=1&limit=10
-College Detail System
-
-Endpoint:
-
-GET /colleges/:id
-
-Returns:
-
-College Information
-Courses
-Reviews
-Reviewer Details
-Admission Cutoffs
-
-Single request loads the entire college detail page.
-
-Compare Colleges Feature
-
-Endpoint:
-
-GET /compare?ids=id1,id2,id3
-
-Allows comparison of up to three colleges.
-
-Comparison fields:
-
-Fees
-Ratings
-Location
-Average Package
-Highest Package
-Courses Count
-Reviews Count
-Popular Cutoffs
-Predictor Tool
-
-Endpoint:
-
-POST /predictor
-
-Input:
-
-{
-  "exam": "JEE Main",
-  "category": "General",
-  "rank": 12000
-}
-Prediction Algorithm
-
-The predictor uses cutoff data stored in PostgreSQL.
-
-Logic:
-
-rank <= 70% cutoff
-      ↓
-Safe College
-
-rank <= cutoff
-      ↓
-Moderate Chance
-
-rank <= 115% cutoff
-      ↓
-Dream College
-
-Output:
-
+```json
 {
   "safe": [],
   "moderate": [],
   "dream": []
 }
-Data Handling Strategy
-Validation Layer
+```
 
-Every request is validated using DTOs.
+## API Overview
 
-Example:
+### Health
 
-CreateCollegeDto
-CreateCourseDto
-CreateReviewDto
-CreateCutoffDto
-PredictorDto
+- `GET /` - returns `"Hello World!"`
 
-Validation rules include:
+### Auth
 
-Required fields
-Email validation
-Numeric validation
-Rank validation
-Rating validation
-Database Integrity
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /auth/profile` *(JWT required)*
 
-Implemented through:
+### Colleges
 
-Foreign Keys
-Prisma Relations
-Unique Constraints
-Input Validation
+- `GET /colleges`
+- `POST /colleges`
+- `GET /colleges/:id`
 
-Examples:
+Supported college listing query params:
+- `search`
+- `location`
+- `minFees`
+- `maxFees`
+- `page`
+- `limit`
 
-Course must belong to a College
+### Courses
 
-Review must belong to:
-    User
-    College
+- `POST /courses`
+- `GET /courses`
+- `GET /courses/:id`
+- `GET /courses/college/:collegeId`
+- `DELETE /courses/:id`
 
-Saved College must belong to:
-    User
-    College
-API Modules
-Auth Module
+### Reviews
 
-Responsible for:
+- `POST /reviews` *(JWT required)*
+- `GET /reviews`
+- `GET /reviews/college/:collegeId`
+- `DELETE /reviews/:id`
 
-Signup
-Login
-JWT generation
-Profile retrieval
-Colleges Module
+### Cutoffs
 
-Responsible for:
+- `POST /cutoffs`
+- `GET /cutoffs`
+- `GET /cutoffs/:id`
+- `GET /cutoffs/college/:collegeId`
+- `DELETE /cutoffs/:id`
 
-College CRUD
-Search
-Filtering
-Detailed college retrieval
-Courses Module
+### Compare
 
-Responsible for:
+- `GET /compare?ids=id1,id2,id3`
 
-Course CRUD
-Fetch courses by college
-Reviews Module
+### Predictor
 
-Responsible for:
+- `POST /predictor`
 
-Add review
-Fetch reviews
-Delete review
-Cutoff Module
+### Saved colleges
 
-Responsible for:
+- `POST /saved` *(JWT required)*
 
-Create cutoffs
-Fetch cutoffs
-Fetch cutoffs by college
-Compare Module
+> `SavedService` also contains a `getSaved(userId)` method, but there is currently no controller route exposing it.
 
-Responsible for:
+## Folder Structure
 
-Side-by-side college comparison
-Predictor Module
+```text
+college_discovery/
+├── README.md
+└── backend/
+    ├── package.json
+    ├── package-lock.json
+    ├── nest-cli.json
+    ├── tsconfig.json
+    ├── tsconfig.build.json
+    ├── eslint.config.mjs
+    ├── prisma.config.ts
+    ├── prisma/
+    │   ├── schema.prisma
+    │   ├── seed.ts
+    │   ├── migrations/
+    │   └── seed-data/
+    │       ├── college.ts
+    │       └── courseTemplates.ts
+    ├── src/
+    │   ├── main.ts
+    │   ├── app.module.ts
+    │   ├── app.controller.ts
+    │   ├── app.service.ts
+    │   ├── prisma/
+    │   │   ├── prisma.module.ts
+    │   │   └── prisma.service.ts
+    │   ├── auth/
+    │   ├── colleges/
+    │   ├── courses/
+    │   ├── reviews/
+    │   ├── cut-off/
+    │   ├── predictor/
+    │   ├── compare/
+    │   └── saved/
+    └── test/
+        ├── app.e2e-spec.ts
+        └── jest-e2e.json
+```
 
-Responsible for:
+### What each main folder contains
 
-College prediction
-Safe / Moderate / Dream categorization
-Saved Module
+- `backend/prisma/` - Prisma schema, migrations, and seed data
+- `backend/src/auth/` - auth controller, service, JWT strategy, guard, and DTOs
+- `backend/src/colleges/` - college list/detail logic and DTOs
+- `backend/src/courses/` - course CRUD-style endpoints
+- `backend/src/reviews/` - review creation and fetch flows
+- `backend/src/cut-off/` - cutoff creation, lookup, and deletion
+- `backend/src/predictor/` - rank prediction endpoint and logic
+- `backend/src/compare/` - college comparison endpoint
+- `backend/src/saved/` - saved-college creation flow
+- `backend/test/` - end-to-end test config
 
-Responsible for:
+## Local Setup
 
-Save colleges
-Fetch saved colleges
-Remove saved colleges
-Deployment
+From `/tmp/workspace/Tanush008/college_discovery/backend`:
 
-Backend deployed using Render.
+```bash
+npm install
+```
 
-Environment Variables:
+Create environment variables:
 
-DATABASE_URL=
-JWT_SECRET=
-PORT=
-NODE_ENV=production
-Future Enhancements
-Advanced filtering
-Infinite scrolling
-Redis caching
-Role-based authorization
-Admin dashboard
-Recommendation engine
-AI-powered college suggestions
-Elasticsearch integration
-Real-time analytics
-Notification system
-Author
+```env
+DATABASE_URL=postgresql://...
+JWT_SECRET=your-secret
+PORT=3000
+NODE_ENV=development
+```
 
-Tanush Aggarwal
+Run the app:
 
-Backend Engineering Assignment
+```bash
+npm run start:dev
+```
 
-Tech Stack:
+Useful commands:
 
-NestJS
-TypeScript
-PostgreSQL
-Prisma ORM
-JWT Authentication
-Render Deployment
+```bash
+npm run build
+npm run lint
+npm test
+npm run test:e2e
+```
+
+## Notes
+
+- CORS is currently configured for `http://localhost:3000`
+- JWT secret falls back to `dev-secret` if `JWT_SECRET` is not set
+- The repository currently contains the backend service only
