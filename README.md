@@ -37,115 +37,183 @@ Deployment
 Render
 Architecture Overview
 
-The application follows a modular architecture.
+The application follows a modular NestJS architecture.
 
-Client
-   |
-   v
-Controllers
-   |
-   v
-Services
-   |
-   v
-Prisma ORM
-   |
-   v
-PostgreSQL
+Request Flow Tree
+
+```text
+Client / API Consumer
+└── HTTP Request
+    └── NestJS Application
+        ├── AuthController
+        │   └── AuthService
+        ├── CollegesController
+        │   └── CollegesService
+        ├── CoursesController
+        │   └── CoursesService
+        ├── ReviewsController
+        │   └── ReviewsService
+        ├── CutOffController
+        │   └── CutOffService
+        ├── PredictorController
+        │   └── PredictorService
+        ├── CompareController
+        │   └── CompareService
+        └── SavedController
+            └── SavedService
+                └── PrismaService
+                    └── PostgreSQL
+```
+
+Module Tree
+
+```text
+AppModule
+├── AuthModule
+├── CollegesModule
+├── CoursesModule
+├── ReviewsModule
+├── CutOffModule
+├── PredictorModule
+├── CompareModule
+├── SavedModule
+└── PrismaModule
+```
+
+Layer Responsibilities Tree
+
+```text
 Controller Layer
+├── Handles HTTP requests
+├── Validates request parameters
+├── Forwards requests to services
+└── Returns API responses
 
-Responsibilities:
-
-Handle HTTP requests
-Validate request parameters
-Forward requests to services
-Return API responses
-
-Example:
-
-GET /colleges/:id
 Service Layer
+├── Contains business logic
+├── Performs database operations
+├── Processes domain data
+├── Runs the college prediction logic
+├── Handles college comparison logic
+└── Manages saved-college functionality
 
-Responsibilities:
-
-Business logic
-Database operations
-Data processing
-College prediction algorithm
-College comparison logic
-
-Example:
-
-College prediction logic
-Compare colleges
-Save college functionality
 Database Layer
+└── Prisma ORM
+    ├── Executes CRUD operations
+    ├── Manages relations
+    ├── Helps optimize queries
+    └── Provides type-safe database access to PostgreSQL
+```
 
-Prisma ORM acts as an abstraction layer between NestJS and PostgreSQL.
-
-Responsibilities:
-
-CRUD operations
-Relations management
-Query optimization
-Type-safe database access
 Project Folder Structure
-src
-│
-├── auth
-│   ├── dto
-│   ├── guards
-│   ├── strategies
-│   ├── auth.controller.ts
-│   ├── auth.service.ts
-│   └── auth.module.ts
-│
-├── colleges
-│   ├── dto
-│   ├── colleges.controller.ts
-│   ├── colleges.service.ts
-│   └── colleges.module.ts
-│
-├── courses
-│   ├── dto
-│   ├── courses.controller.ts
-│   ├── courses.service.ts
-│   └── courses.module.ts
-│
-├── reviews
-│   ├── dto
-│   ├── reviews.controller.ts
-│   ├── reviews.service.ts
-│   └── reviews.module.ts
-│
-├── cutoff
-│   ├── dto
-│   ├── cutoff.controller.ts
-│   ├── cutoff.service.ts
-│   └── cutoff.module.ts
-│
-├── predictor
-│   ├── dto
-│   ├── predictor.controller.ts
-│   ├── predictor.service.ts
-│   └── predictor.module.ts
-│
-├── compare
-│   ├── compare.controller.ts
-│   ├── compare.service.ts
-│   └── compare.module.ts
-│
-├── saved
-│   ├── dto
-│   ├── saved.controller.ts
-│   ├── saved.service.ts
-│   └── saved.module.ts
-│
-├── prisma
-│   └── prisma.service.ts
-│
-├── app.module.ts
-└── main.ts
+
+```text
+college_discovery/
+├── README.md
+└── backend/
+    ├── .gitignore
+    ├── .prettierrc
+    ├── README.md
+    ├── eslint.config.mjs
+    ├── nest-cli.json
+    ├── package-lock.json
+    ├── package.json
+    ├── prisma.config.ts
+    ├── tsconfig.build.json
+    ├── tsconfig.json
+    ├── prisma/
+    │   ├── schema.prisma
+    │   ├── seed.ts
+    │   ├── migrations/
+    │   │   ├── migration_lock.toml
+    │   │   ├── 20260525111536_init/
+    │   │   │   └── migration.sql
+    │   │   └── 20260525184855_update_course/
+    │   │       └── migration.sql
+    │   └── seed-data/
+    │       ├── college.ts
+    │       └── courseTemplates.ts
+    ├── src/
+    │   ├── app.controller.spec.ts
+    │   ├── app.controller.ts
+    │   ├── app.module.ts
+    │   ├── app.service.ts
+    │   ├── main.ts
+    │   ├── auth/
+    │   │   ├── auth.controller.spec.ts
+    │   │   ├── auth.controller.ts
+    │   │   ├── auth.module.ts
+    │   │   ├── auth.service.spec.ts
+    │   │   ├── auth.service.ts
+    │   │   ├── constants.ts
+    │   │   ├── jwt-auth.guard.ts
+    │   │   ├── jwt.strategy.ts
+    │   │   └── dto/
+    │   │       ├── login.dto.ts
+    │   │       └── signup.dto.ts
+    │   ├── colleges/
+    │   │   ├── colleges.controller.spec.ts
+    │   │   ├── colleges.controller.ts
+    │   │   ├── colleges.module.ts
+    │   │   ├── colleges.service.spec.ts
+    │   │   ├── colleges.service.ts
+    │   │   └── dto/
+    │   │       ├── create-college.dto.ts
+    │   │       └── get-colleges.dto.ts
+    │   ├── compare/
+    │   │   ├── compare.controller.spec.ts
+    │   │   ├── compare.controller.ts
+    │   │   ├── compare.module.ts
+    │   │   ├── compare.service.spec.ts
+    │   │   └── compare.service.ts
+    │   ├── courses/
+    │   │   ├── courses.controller.spec.ts
+    │   │   ├── courses.controller.ts
+    │   │   ├── courses.module.ts
+    │   │   ├── courses.service.spec.ts
+    │   │   ├── courses.service.ts
+    │   │   └── dto/
+    │   │       └── create-course.dto.ts
+    │   ├── cut-off/
+    │   │   ├── cut-off.controller.spec.ts
+    │   │   ├── cut-off.controller.ts
+    │   │   ├── cut-off.module.ts
+    │   │   ├── cut-off.service.spec.ts
+    │   │   ├── cut-off.service.ts
+    │   │   └── dto/
+    │   │       └── create-cutoff.dto.ts
+    │   ├── predictor/
+    │   │   ├── predictor.controller.spec.ts
+    │   │   ├── predictor.controller.ts
+    │   │   ├── predictor.module.ts
+    │   │   ├── predictor.service.spec.ts
+    │   │   ├── predictor.service.ts
+    │   │   └── dto/
+    │   │       └── predictor.dto.ts
+    │   ├── prisma/
+    │   │   ├── prisma.module.ts
+    │   │   ├── prisma.service.spec.ts
+    │   │   └── prisma.service.ts
+    │   ├── reviews/
+    │   │   ├── reviews.controller.spec.ts
+    │   │   ├── reviews.controller.ts
+    │   │   ├── reviews.module.ts
+    │   │   ├── reviews.service.spec.ts
+    │   │   ├── reviews.service.ts
+    │   │   └── dto/
+    │   │       └── create-review.dto.ts
+    │   └── saved/
+    │       ├── saved.controller.spec.ts
+    │       ├── saved.controller.ts
+    │       ├── saved.module.ts
+    │       ├── saved.service.spec.ts
+    │       ├── saved.service.ts
+    │       └── dto/
+    │           └── save-college.dto.ts
+    └── test/
+        ├── app.e2e-spec.ts
+        └── jest-e2e.json
+```
 Database Schema Design
 User Entity
 
