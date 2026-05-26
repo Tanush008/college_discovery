@@ -5,18 +5,10 @@ import { SaveCollegeDto } from './dto/save-college.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('saved')
 export class SavedController {
-    constructor(
-        private readonly savedService: SavedService,
-    ) { }
-    @Post()
-    @UseGuards(JwtAuthGuard)
-    saveCollege(
-        @Body() dto: SaveCollegeDto,
-        @Req() req,
-    ) {
-        return this.savedService.saveCollege(
-            req.user.userId,
-            dto.collegeId,
-        );
-    }
+  constructor(private readonly savedService: SavedService) {}
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  saveCollege(@Body() dto: SaveCollegeDto, @Req() req) {
+    return this.savedService.saveCollege(req.user.userId, dto.collegeId);
+  }
 }

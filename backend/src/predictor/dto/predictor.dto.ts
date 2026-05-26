@@ -1,18 +1,13 @@
-import {
-    IsString,
-    IsInt,
-    Min,
-} from 'class-validator';
+import { IsString, IsInt, Min } from 'class-validator';
 
 export class PredictorDto {
+  @IsString()
+  exam: string;
 
-    @IsString()
-    exam: string;
+  @IsString()
+  category: string;
 
-    @IsString()
-    category: string;
-
-    @IsInt()
-    @Min(1)
-    rank: number;
+  @IsInt()
+  @Min(1)
+  rank: number;
 }
